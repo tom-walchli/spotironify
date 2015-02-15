@@ -1,18 +1,6 @@
 /* jshint node: true, esnext: true */
 "use strict";
 
-/*
-title <string>
-duration <number>
-producers <array>[string]
-genre <string>
-label <string>
-cover <url:string>
-price <number>
-release day <date>
-tracks <array>[track]
-*/
-
 var TrackClass  = require('./track.js');
 var Utils       = require('./utils.js');
 
@@ -21,8 +9,7 @@ class Album {
 
     constructor(data = {}) {
 
-        Album.audioPlaying        = void 0;
-        Album.playingProgressBar  = void 0;
+        Album.audio  = void(0);
         
         Utils.assertString(data.name, 'Title should be a string');
         this.title = data.name;
@@ -37,26 +24,12 @@ class Album {
 
         this.fullUrl = data.href;
 
-        this.thumb = "<img src='" + data.images[2].url + "'></a>";
+        this.thumb = "<img src='" + data.images[2].url + "' class='albumThumb' title='Show details'>";
         this.elements.push(this.thumb);
 
-        this.elements.push("<h4>" + this.title + "</h4>");
-
-            // `<a href="${this.cover}">`
+        this.elements.push("<strong>" + this.title + "</strong>");
 
         this.li = `${this.elements.join("\n")}`;
-
-        // Utils.assertString(data.genre, 'Genre should be a string');
-        // this.genre = data.genre;
-
-        // Utils.assertString(data.label, 'Label should be a string');
-        // this.label = data.label;
-
-        // Utils.assertNumber(data.price, 'Price should be a number');
-        // this.price = data.price;
-
-        // Utils.assertDate(data.release, 'Release date should be in date format');
-        // this.release = data.release;
 
         this.tracks = [];
     }
@@ -93,7 +66,7 @@ class Album {
     }
 
     getFull(event,div) {
-//        event.preventDefault();
+        event.preventDefault();
         $.get(this.fullUrl, (data) => {
             this.loadTracks(data, div);
         });
@@ -121,33 +94,29 @@ class Album {
     buildFull(div){
         $(div).empty();
         var html = `
-            <img id=${'img_' + this.id} src=${this.cover}></a>
-            <h3>${this.title}</h3>
-            ${this.artists.join(' ')}
-            <ol class="tracksOL" id=${this.id}>
-            </ol>
-            `;
+            <img class="coverImg" id=${'img_' + this.id} src=${this.cover} title="Collapse...">
+            <div class="rightSide">
+                <h3>${this.artists.join(' ')}: ${this.title}</h3>
+                <ol class="tracksOL" id=${this.id}></ol>
+            </div>
+        `;
 
         $(div).html(html);
         var that = this;
         this.tracks.forEach(function(track){
             var innerHtml = `
-                    <li class="track--li">
-                        <div class="detailTrack">
-                            <img preview_url=${track.preview_url} id=${track.id} src="img/soundPreview.jpg">
-                            <h5>${track.title}</h5>
-                        </div>
-                    </li>`;
-            var innerDiv = document.createElement('div');
-            $(innerDiv).html(innerHtml);
-            $('#' + that.id).append(innerDiv);
-            innerDiv.className = 'innerDiv';
-            var audioIcon = $('#' + track.id);
+                <span class="innerDiv" id="div"+${track.id}>
+                    <img class="audioIcon" preview_url=${track.preview_url} id=${'audio_'+track.id} src="img/play.jpg" title="Play">
+                    <h5 class="trackTitle">${track.title}</h5>
+                </span>`;
+            var innerLI = document.createElement('li');
+            $(innerLI).html(innerHtml);
+            $('#' + that.id).append(innerLI);
+            var audioIcon = $('#audio_' + track.id);
             var hasClick = $(audioIcon).data('events') && $(audioIcon).data('events')['click']; 
             if (!hasClick){
-                $(audioIcon).click(function(event){
-                    console.log('AUDI ICON');
-                    that.playAudio($(audioIcon).attr('preview_url'), innerDiv);
+                $(audioIcon).on('click', function(event){
+                    that.playAudio(audioIcon, $(innerLI).children().first());
                 });
             }
         });
@@ -158,68 +127,136 @@ class Album {
         });
     }
 
-    playAudio (preview_url, innerDiv){
-        var audio = new Audio(preview_url);
+    playAudio (icon, innerDiv){
+
+        console.log('play');
+        if (Album.audio){
+            this.audioEnded();
+        }
 
         var that = this;
-        audio.oncanplaythrough = function(){
-            audio.play();
+        $(icon).off('click');
+        Album.audio = new Audio($(icon).attr('preview_url'));
+        Album.audio.icon = icon;
+        Album.audio.innerDiv = innerDiv;
+
+        var that = this;
+        Album.audio.oncanplaythrough = function(){
+            Album.audio.play();
+            Album.audio.done = false;
+            Utils.setAttr(icon,'src','img/pause.jpg');
+            Utils.setAttr(icon,'title', 'Pause');
             var progressBar = document.createElement('progress');
-            $(progressBar).attr('max',audio.duration);
+            $(progressBar).attr('max',Album.audio.duration);
             $(progressBar).attr('value',0);
+            $(progressBar).attr('class','progressBar');
             $(innerDiv).append(progressBar);
 
-            if (Album.audioPlaying) {
-                that.audioEnded(Album.audioPlaying,Album.playingProgressBar);
-            }
+            var stopBtn = document.createElement('img');
+            stopBtn.className = 'audioIcon stopBtn';
 
-            Album.audioPlaying        = audio;
-            Album.playingProgressBar  = progressBar;
+            Utils.setAttr(stopBtn,'src','img/stop.jpg');
+            Utils.setAttr(stopBtn,'title', 'Stop');
 
-            that.whilePlaying(audio,progressBar);
+            $(icon).on('click', function(event){
+                that.pause(Album.audio, icon, innerDiv);
+            });
+            
+            $(stopBtn).on('click',function(event){
+                that.stop();
+            });
+
+            $(stopBtn).insertAfter(icon);
+
+            that.whilePlaying(icon,innerDiv);
         }
     }
 
-    audioEnded(audio, progressBar){
+    pause(){
+        console.log('pause');
+        var that = this;
+        var icon = Album.audio.icon;
+        $(icon).off('click');
+        Album.audio.pause();
+        Utils.setAttr(icon,'src','img/play.jpg');
+        Utils.setAttr(icon,'title', 'Play');
+        $(icon).on('click', function (event){
+            that.resume();
+        });
+    }
+
+    resume(){
+        console.log('resume');
+        var that = this;
+        var icon = Album.audio.icon;
+        $(icon).off('click');
+        Album.audio.play();
+        Utils.setAttr(icon,'src','img/pause.jpg');
+        Utils.setAttr(icon,'title', 'Pause');
+        $(icon).on('click', function (event){
+            that.pause();
+        });
+    }
+
+    stop (){
+        console.log('stop');
+        this.audioEnded();
+    }
+
+    audioEnded(){
+        console.log('audioEnded');
+        $(icon).off('click');
+        var icon = Album.audio.icon;
+        var innerDiv = Album.audio.innerDiv;
+        var stopBtn = $(innerDiv).find('.stopBtn');
+        var progressBar = $(innerDiv).find('.progressBar')
+        stopBtn.remove();
         progressBar.remove();
-        audio.pause();
-        audio = void 0;
-        progressBar = void 0;
-        // Album.audioPlaying        = void 0;
-        // Album.playingProgressBar  = void 0;
-        return;
+        Album.audio.pause();
+        var that = this;
+        Utils.setAttr(icon,'src','img/play.jpg');
+        Utils.setAttr(icon,'title', 'Play');
+        $(icon).on('click', function(event){
+            that.playAudio(icon, innerDiv);
+        });
+        Album.audio.done = true;
     }
 
-    whilePlaying(audio,progressBar) {
-        if (audio.ended){
-            this.audioEnded(audio, progressBar);
+    whilePlaying() {
+        if (Album.audio && Album.audio.ended){
+            this.audioEnded();
+            return;
+        } else if (!Album.audio || Album.audio.done){
+            return;
         }
-        $(progressBar).attr('value',audio.currentTime);
+        var innerDiv = Album.audio.innerDiv;
+        var progressBar = $(innerDiv).find('.progressBar');
+        $(progressBar).attr('value',Album.audio.currentTime);
         var that = this;
         setTimeout(function(){
-            that.whilePlaying(audio,progressBar);
+            that.whilePlaying();
         },100);
     }
 
     addEventListeners(div){
         var that = this;
-        console.log('ADD EVENT LISTENERS', div);
         var img = $(div).children().first();
 
         $(img).on('click', function(event){
-             console.log('DIV CLICK');
              that.getFull(event,div);
         });
-        $(img).on('mouseOver').css('cursor', 'hand');
-        $(img).on('mouseOut').css('cursor', 'pointer');
     }
 
     collapse(event,div){
+        if (Album.audio){
+            this.audioEnded();
+        }
         event.preventDefault();
         $(div).empty();        
         div.innerHTML = this.li;
         this.addEventListeners(div);
     }
+
 }
 
 module.exports = Album;

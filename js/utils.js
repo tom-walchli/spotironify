@@ -25,8 +25,12 @@ function assertDate (d, errorMsg) {
 	}
 }
 
+function setAttr(ele,att,val){
+	$(ele).attr(att,val);
+}
 
-module.exports.uniq = uniq;
+module.exports.uniq 		= uniq;
 module.exports.assertNumber = assertNumber;
 module.exports.assertString = assertString;
-module.exports.assertDate = assertDate;
+module.exports.assertDate 	= assertDate;
+module.exports.setAttr 		= setAttr;

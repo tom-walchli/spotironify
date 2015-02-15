@@ -1,21 +1,43 @@
-.albumItem {
-/*	float: left;
+/*.albumItem {
+	float: left;
     display:inline;
-*/}
+}
 
 .track--li {
 	display: inline;
 }
 
-.detailTrack {
-	display: inline;
-	flush : left;
-}
 .tracksOL{
 	float: left;
 }
+*/
 
-/*.innerDiv {
+.trackTitle {
+	display: inline;
+	/*float : left;*/
+}
+
+.rightSide {
+	display: inline;
+	/*float : left;*/
+}
+
+.audioIcon:hover {
+	cursor: pointer;
+	opacity: 0.7;
+}
+
+.coverImg:hover {
+	cursor: pointer;
+	opacity: 0.8;
+}
+
+.albumThumb:hover {
+	cursor: pointer;
+	opacity: 0.8;
+}
+
+/*.innerLI {
 	display: inline;
 	float: left;
 }*/
