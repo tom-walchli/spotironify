@@ -1,30 +1,24 @@
-/*.albumItem {
-	float: left;
-    display:inline;
-}
-
-.track--li {
-	display: inline;
+.albumItem h3 {
+	padding: 20px 0 0 20px;
 }
 
 .tracksOL{
-	float: left;
+	min-height: 350px;
 }
-*/
 
 .trackTitle {
 	display: inline;
-	/*float : left;*/
 }
 
 .rightSide {
-	display: inline;
-	/*float : left;*/
+	display: inline-block;
+	padding-top: 5px;
+	padding-bottom: 15px;
 }
 
-.audioIcon:hover {
-	cursor: pointer;
-	opacity: 0.7;
+.coverImg {
+	float: left;
+	padding: 10px 30px 30px 30px;
 }
 
 .coverImg:hover {
@@ -32,12 +26,12 @@
 	opacity: 0.8;
 }
 
+.audioIcon:hover {
+	cursor: pointer;
+	opacity: 0.7;
+}
+
 .albumThumb:hover {
 	cursor: pointer;
 	opacity: 0.8;
 }
-
-/*.innerLI {
-	display: inline;
-	float: left;
-}*/

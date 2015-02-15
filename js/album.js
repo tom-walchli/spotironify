@@ -17,7 +17,6 @@ class Album {
         this.producers = [];
         this.id = data.id;
 
-//        Utils.assertString(data.url, 'URL should be a string');
         this.cover = data.images[1].url;
 
         this.elements = [];
@@ -30,8 +29,6 @@ class Album {
         this.elements.push("<strong>" + this.title + "</strong>");
 
         this.li = `${this.elements.join("\n")}`;
-
-        this.tracks = [];
     }
 
     addTrack(track) {
@@ -74,7 +71,7 @@ class Album {
     }
 
     loadTracks(data,div) {
-
+        this.tracks = [];
         var that = this;
         data.tracks.items.forEach(function(track){
             that.loadTrack(track);
@@ -94,11 +91,11 @@ class Album {
     buildFull(div){
         $(div).empty();
         var html = `
-            <img class="coverImg" id=${'img_' + this.id} src=${this.cover} title="Collapse...">
+            <h3>${this.artists.join(', ')}: ${this.title}</h3>
             <div class="rightSide">
-                <h3>${this.artists.join(' ')}: ${this.title}</h3>
                 <ol class="tracksOL" id=${this.id}></ol>
             </div>
+            <img class="coverImg" id=${'img_' + this.id} src=${this.cover} title="Collapse...">
         `;
 
         $(div).html(html);
@@ -130,6 +127,7 @@ class Album {
     playAudio (icon, innerDiv){
 
         console.log('play');
+        
         if (Album.audio){
             this.audioEnded();
         }
