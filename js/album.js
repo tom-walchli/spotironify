@@ -16,10 +16,14 @@ tracks <array>[track]
 var TrackClass  = require('./track.js');
 var Utils       = require('./utils.js');
 
+
 class Album {
 
     constructor(data = {}) {
 
+        Album.audioPlaying        = void 0;
+        Album.playingProgressBar  = void 0;
+        
         Utils.assertString(data.name, 'Title should be a string');
         this.title = data.name;
 
@@ -89,7 +93,7 @@ class Album {
     }
 
     getFull(event,div) {
-        event.preventDefault();
+//        event.preventDefault();
         $.get(this.fullUrl, (data) => {
             this.loadTracks(data, div);
         });
@@ -116,12 +120,11 @@ class Album {
 
     buildFull(div){
         $(div).empty();
-        this.removeEventListeners(div);
         var html = `
             <img id=${'img_' + this.id} src=${this.cover}></a>
             <h3>${this.title}</h3>
             ${this.artists.join(' ')}
-            <ol id=${this.id}>
+            <ol class="tracksOL" id=${this.id}>
             </ol>
             `;
 
@@ -129,18 +132,24 @@ class Album {
         var that = this;
         this.tracks.forEach(function(track){
             var innerHtml = `
-                    <li>
-                        <img preview_url=${track.preview_url} id=${track.id} src="img/soundPreview.jpg">
-                        <h5>${track.title}</h5>
+                    <li class="track--li">
+                        <div class="detailTrack">
+                            <img preview_url=${track.preview_url} id=${track.id} src="img/soundPreview.jpg">
+                            <h5>${track.title}</h5>
+                        </div>
                     </li>`;
             var innerDiv = document.createElement('div');
             $(innerDiv).html(innerHtml);
             $('#' + that.id).append(innerDiv);
+            innerDiv.className = 'innerDiv';
             var audioIcon = $('#' + track.id);
-            audioIcon.click(function(event){
-                console.log('AUDI ICON');
-                that.playAudio($(audioIcon).attr('preview_url'), innerDiv);
-            });
+            var hasClick = $(audioIcon).data('events') && $(audioIcon).data('events')['click']; 
+            if (!hasClick){
+                $(audioIcon).click(function(event){
+                    console.log('AUDI ICON');
+                    that.playAudio($(audioIcon).attr('preview_url'), innerDiv);
+                });
+            }
         });
 
         $('#img_' + this.id).click(function (event){
@@ -150,29 +159,59 @@ class Album {
     }
 
     playAudio (preview_url, innerDiv){
-        var audio = new Audio(preview_url) ;
+        var audio = new Audio(preview_url);
+
+        var that = this;
         audio.oncanplaythrough = function(){
             audio.play();
+            var progressBar = document.createElement('progress');
+            $(progressBar).attr('max',audio.duration);
+            $(progressBar).attr('value',0);
+            $(innerDiv).append(progressBar);
+
+            if (Album.audioPlaying) {
+                that.audioEnded(Album.audioPlaying,Album.playingProgressBar);
+            }
+
+            Album.audioPlaying        = audio;
+            Album.playingProgressBar  = progressBar;
+
+            that.whilePlaying(audio,progressBar);
         }
-        $(innerDiv).append("<progress value='5' max='30'></progress>");
+    }
+
+    audioEnded(audio, progressBar){
+        progressBar.remove();
+        audio.pause();
+        audio = void 0;
+        progressBar = void 0;
+        // Album.audioPlaying        = void 0;
+        // Album.playingProgressBar  = void 0;
+        return;
+    }
+
+    whilePlaying(audio,progressBar) {
+        if (audio.ended){
+            this.audioEnded(audio, progressBar);
+        }
+        $(progressBar).attr('value',audio.currentTime);
+        var that = this;
+        setTimeout(function(){
+            that.whilePlaying(audio,progressBar);
+        },100);
     }
 
     addEventListeners(div){
         var that = this;
         console.log('ADD EVENT LISTENERS', div);
-        $(div).on('click', function (event){
-            console.log('DIV CLICK');
-           that.getFull(event,div);
-        });
-        $(div).on('mouseOver').css('cursor', 'hand');
-        $(div).on('mouseOut').css('cursor', 'pointer');
-    }
+        var img = $(div).children().first();
 
-    removeEventListeners(div){
-        $(div).off();
-    //     $(div).off('mouseOver');
-    //     $(div).off('mouseOut');
-        $(div).find('img').off();
+        $(img).on('click', function(event){
+             console.log('DIV CLICK');
+             that.getFull(event,div);
+        });
+        $(img).on('mouseOver').css('cursor', 'hand');
+        $(img).on('mouseOut').css('cursor', 'pointer');
     }
 
     collapse(event,div){

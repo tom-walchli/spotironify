@@ -1,0 +1,21 @@
+.albumItem {
+/*	float: left;
+    display:inline;
+*/}
+
+.track--li {
+	display: inline;
+}
+
+.detailTrack {
+	display: inline;
+	flush : left;
+}
+.tracksOL{
+	float: left;
+}
+
+/*.innerDiv {
+	display: inline;
+	float: left;
+}*/
