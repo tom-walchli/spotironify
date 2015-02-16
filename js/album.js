@@ -127,7 +127,7 @@ class Album {
     playAudio (icon, innerDiv){
 
         console.log('play');
-        
+
         if (Album.audio){
             this.audioEnded();
         }
@@ -140,14 +140,23 @@ class Album {
 
         var that = this;
         Album.audio.oncanplaythrough = function(){
+            if (Album.audio.done === false){
+                return;
+            }
+            console.log('ready to play');
             Album.audio.play();
             Album.audio.done = false;
             Utils.setAttr(icon,'src','img/pause.jpg');
             Utils.setAttr(icon,'title', 'Pause');
             var progressBar = document.createElement('progress');
-            $(progressBar).attr('max',Album.audio.duration);
-            $(progressBar).attr('value',0);
-            $(progressBar).attr('class','progressBar');
+            Utils.setAttr(progressBar,'max',Album.audio.duration);
+            Utils.setAttr(progressBar,'value',0);
+            Utils.setAttr(progressBar,'class','progressBar');
+
+            $(progressBar).click( function (event) {
+                that.jumpTo(event,progressBar);
+            });
+
             $(innerDiv).append(progressBar);
 
             var stopBtn = document.createElement('img');
@@ -234,6 +243,15 @@ class Album {
         setTimeout(function(){
             that.whilePlaying();
         },100);
+    }
+
+    jumpTo(event,progressBar){
+        event.preventDefault();
+        var innerDiv = Album.audio.innerDiv;
+        var progressBar = $(innerDiv).find('.progressBar');
+
+        var ratio = event.offsetX / progressBar.width();
+        Album.audio.currentTime = Album.audio.duration * ratio;
     }
 
     addEventListeners(div){
