@@ -7,6 +7,7 @@ var Utils       = require('./utils.js');
 
 class Album {
 
+    // constructor -- initialize Album props
     constructor(data = {}) {
 
         Album.audio  = void(0);
@@ -38,6 +39,8 @@ class Album {
         this.tracks.push(track);
     }
 
+    // utility methods...
+    // -------------------------
     getArtists() {
         var artists = [];
         this.tracks.forEach(function(track) {
@@ -61,7 +64,10 @@ class Album {
         });
         return Utils.uniq(producers);
     }
+    // ----------------------------
 
+
+    // start building detailed div from click on thumbImage in app.js
     getFull(event,div) {
         event.preventDefault();
         $.get(this.fullUrl, (data) => {
@@ -88,6 +94,7 @@ class Album {
         this.addTrack(track);
     }
 
+    // render the detailed div
     buildFull(div){
         $(div).empty();
         var html = `
@@ -124,6 +131,12 @@ class Album {
         });
     }
 
+    // ==========================
+    // HANDLE AUDIO
+    // ==========================
+
+    // new audio:
+    // play audio from the audioIcon clicked
     playAudio (icon, innerDiv){
 
         console.log('play');
@@ -166,7 +179,7 @@ class Album {
             Utils.setAttr(stopBtn,'title', 'Stop');
 
             $(icon).on('click', function(event){
-                that.pause(Album.audio, icon, innerDiv);
+                that.pause();
             });
             
             $(stopBtn).on('click',function(event){
@@ -179,6 +192,7 @@ class Album {
         }
     }
 
+    // pause audio
     pause(){
         console.log('pause');
         var that = this;
@@ -192,6 +206,7 @@ class Album {
         });
     }
 
+    // resume audio after pause
     resume(){
         console.log('resume');
         var that = this;
@@ -205,11 +220,13 @@ class Album {
         });
     }
 
+    // stop audio after stopBtn.click();
     stop (){
         console.log('stop');
         this.audioEnded();
     }
 
+    // end audio when elapsed === duration (OR) other playback selected
     audioEnded(){
         console.log('audioEnded');
         $(icon).off('click');
@@ -229,6 +246,7 @@ class Album {
         Album.audio.done = true;
     }
 
+    // essentially update progressBar... 
     whilePlaying() {
         if (Album.audio && Album.audio.ended){
             this.audioEnded();
@@ -245,6 +263,7 @@ class Album {
         },100);
     }
 
+    // click on progressBar jumps audio preview to selected currentTime
     jumpTo(event,progressBar){
         event.preventDefault();
         var innerDiv = Album.audio.innerDiv;
@@ -254,6 +273,7 @@ class Album {
         Album.audio.currentTime = Album.audio.duration * ratio;
     }
 
+    // add click-events to the thumb image in album-view
     addEventListeners(div){
         var that = this;
         var img = $(div).children().first();
@@ -263,6 +283,7 @@ class Album {
         });
     }
 
+    // restore the album-view state
     collapse(event,div){
         if (Album.audio){
             this.audioEnded();
